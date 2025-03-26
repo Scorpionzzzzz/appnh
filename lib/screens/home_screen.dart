@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../models/user.dart';
+import '../models/feature.dart';
 import '../utils/toast_utils.dart';
 import '../utils/responsive_text.dart';
 import 'login_screen.dart';
 import '../services/auth_service.dart';
+import '../services/feature_service.dart';
 import 'transfer_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final User user;
@@ -18,6 +21,107 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final _featureService = FeatureService();
+  late List<Feature> _features;
+  List<Feature> _enabledFeatures = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeFeatures();
+  }
+
+  void _initializeFeatures() {
+    _features = [
+      Feature(
+        id: 'transfer',
+        label: 'Chuyển tiền',
+        icon: Icons.sync_alt_rounded,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TransferScreen(user: widget.user),
+            ),
+          );
+        },
+      ),
+      Feature(
+        id: 'savings',
+        label: 'Tiết kiệm',
+        icon: Icons.savings_outlined,
+        onTap: () {
+          showTopToast(context, 'Tính năng tiết kiệm đang được phát triển');
+        },
+      ),
+      Feature(
+        id: 'bill_payment',
+        label: 'Thanh toán\nhoá đơn',
+        icon: Icons.receipt_long_outlined,
+        onTap: () {
+          showTopToast(context, 'Tính năng thanh toán hoá đơn đang được phát triển');
+        },
+      ),
+      Feature(
+        id: 'phone_topup',
+        label: 'Nạp thẻ\nđiện thoại',
+        icon: Icons.phone_android_outlined,
+        onTap: () {
+          showTopToast(context, 'Tính năng nạp thẻ điện thoại đang được phát triển');
+        },
+      ),
+      Feature(
+        id: 'insurance',
+        label: 'Bảo hiểm',
+        icon: Icons.health_and_safety_outlined,
+        onTap: () {
+          showTopToast(context, 'Tính năng bảo hiểm đang được phát triển');
+        },
+      ),
+      Feature(
+        id: 'investment',
+        label: 'Đầu tư',
+        icon: Icons.trending_up_rounded,
+        onTap: () {
+          showTopToast(context, 'Tính năng đầu tư đang được phát triển');
+        },
+      ),
+      Feature(
+        id: 'loan',
+        label: 'Vay vốn',
+        icon: Icons.account_balance_wallet_outlined,
+        onTap: () {
+          showTopToast(context, 'Tính năng vay vốn đang được phát triển');
+        },
+      ),
+      Feature(
+        id: 'credit_card',
+        label: 'Thẻ tín dụng',
+        icon: Icons.credit_card_outlined,
+        onTap: () {
+          showTopToast(context, 'Tính năng thẻ tín dụng đang được phát triển');
+        },
+      ),
+    ];
+    _loadFeatureSettings();
+  }
+
+  Future<void> _loadFeatureSettings() async {
+    final settings = await _featureService.getFeatureSettings();
+    setState(() {
+      for (var feature in _features) {
+        if (settings.containsKey(feature.id)) {
+          feature.isEnabled = settings[feature.id]!;
+        }
+      }
+      _updateEnabledFeatures();
+    });
+  }
+
+  void _updateEnabledFeatures() {
+    _enabledFeatures = _features.where((f) => f.isEnabled).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,6 +158,27 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     Row(
                       children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.settings_outlined,
+                            size: 24.w,
+                            color: const Color(0xFF4A8B4A),
+                          ),
+                          onPressed: () async {
+                            final result = await Navigator.push<List<Feature>>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SettingsScreen(features: _features),
+                              ),
+                            );
+                            if (result != null) {
+                              setState(() {
+                                _features = result;
+                                _updateEnabledFeatures();
+                              });
+                            }
+                          },
+                        ),
                         IconButton(
                           icon: Icon(
                             Icons.notifications_none_rounded,
@@ -180,41 +305,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisSpacing: 16.h,
                           crossAxisSpacing: 16.w,
                           childAspectRatio: 1.2,
-                          children: [
-                            _buildFeatureButton(
-                              icon: Icons.sync_alt_rounded,
-                              label: 'Chuyển tiền',
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => TransferScreen(user: widget.user),
-                                  ),
-                                );
-                              },
-                            ),
-                            _buildFeatureButton(
-                              icon: Icons.savings_outlined,
-                              label: 'Tiết kiệm',
-                              onTap: () {
-                                showTopToast(context, 'Tính năng tiết kiệm đang được phát triển');
-                              },
-                            ),
-                            _buildFeatureButton(
-                              icon: Icons.receipt_long_outlined,
-                              label: 'Thanh toán\nhoá đơn',
-                              onTap: () {
-                                showTopToast(context, 'Tính năng thanh toán hoá đơn đang được phát triển');
-                              },
-                            ),
-                            _buildFeatureButton(
-                              icon: Icons.phone_android_outlined,
-                              label: 'Nạp thẻ\nđiện thoại',
-                              onTap: () {
-                                showTopToast(context, 'Tính năng nạp thẻ điện thoại đang được phát triển');
-                              },
-                            ),
-                          ],
+                          children: _enabledFeatures.map((feature) {
+                            return _buildFeatureButton(
+                              icon: feature.icon,
+                              label: feature.label,
+                              onTap: feature.onTap,
+                            );
+                          }).toList(),
                         ),
                       ),
                     ],

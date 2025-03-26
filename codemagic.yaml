@@ -1,14 +1,32 @@
 workflows:
   ios-workflow:
     name: iOS Workflow
+    instance_type: mac_mini_m1
     max_build_duration: 60
     environment:
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: com.easibank.app
+      vars:
+        BUNDLE_ID: "com.easibank.app"
       flutter: stable
       xcode: latest
       cocoapods: default
     scripts:
-      - flutter pub get
-      - flutter build ios --release --no-codesign
+      - name: Set up code signing settings
+        script: |
+          echo "Setting up code signing..."
+          keychain initialize
+      - name: Get Flutter packages
+        script: |
+          flutter clean
+          flutter pub get
+      - name: Install pods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+      - name: Flutter build ipa
+        script: |
+          flutter build ios --release --no-codesign
     artifacts:
       - build/ios/iphoneos/Runner.app
       - build/ios/ipa/*.ipa
@@ -17,7 +35,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - your-email@example.com
+          - vuikhai3@gmail.com
         notify:
           success: true
           failure: true 
