@@ -9,8 +9,6 @@ workflows:
         bundle_identifier: com.easibank.app
       vars:
         BUNDLE_ID: "com.easibank.app"
-        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
-        XCODE_SCHEME: "Runner"
       flutter: stable
       xcode: latest
       cocoapods: default
