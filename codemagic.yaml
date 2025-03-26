@@ -1,7 +1,7 @@
 workflows:
   ios-workflow:
     name: iOS Workflow
-    instance_type: mac_mini_m1
+    instance_type: mac_m2
     max_build_duration: 60
     environment:
       ios_signing:
@@ -12,6 +12,10 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+        - ~/.cocoapods
     scripts:
       - name: Set up code signing settings
         script: |
@@ -27,9 +31,13 @@ workflows:
       - name: Flutter build ipa
         script: |
           flutter build ios --release --no-codesign
+          cd build/ios/iphoneos
+          mkdir Payload
+          cp -r Runner.app Payload
+          zip -r app.ipa Payload
     artifacts:
+      - build/ios/iphoneos/app.ipa
       - build/ios/iphoneos/Runner.app
-      - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
       - flutter_drive.log
     publishing:
