@@ -9,6 +9,8 @@ workflows:
         bundle_identifier: com.easibank.app
       vars:
         BUNDLE_ID: "com.easibank.app"
+        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -29,13 +31,16 @@ workflows:
         script: |
           cd ios
           pod install
-      - name: Flutter build ipa
+      - name: Build iOS
         script: |
-          flutter build ipa --release --no-codesign --export-method development
+          flutter build ios --release --no-codesign
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace -scheme Runner -sdk iphoneos -configuration Release -archivePath build/Runner.xcarchive archive
+          xcodebuild -exportArchive -archivePath build/Runner.xcarchive -exportOptionsPlist exportOptions.plist -exportPath build/IPA
     artifacts:
-      - build/ios/ipa/*.ipa
+      - ios/build/IPA/Runner.ipa
+      - ios/build/Runner.xcarchive
       - /tmp/xcodebuild_logs/*.log
-      - flutter_drive.log
     publishing:
       email:
         recipients:
